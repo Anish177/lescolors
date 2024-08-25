@@ -1,6 +1,6 @@
 # lesColors
 
-lesColors is a Python package that provides utilities for manipulating and analyzing colors. It includes functions for calculating adjacent, analogous, and complementary colors, converting RGB values to hexadecimal format, and extracting the dominant color from an image via a URL.
+lesColors is a lightweight Python package that provides utilities for manipulating and analyzing colors. It includes functions for calculating adjacent, analogous, and complementary colors, converting RGB values to hexadecimal format, and extracting the dominant color from an image via a URL.
 
 ## Installation
 
