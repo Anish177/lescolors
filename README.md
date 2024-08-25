@@ -8,3 +8,10 @@ You can install LesColors via pip:
 
 ```bash
 pip install lescolors
+```
+
+or
+
+```bash
+pip3 install lescolors
+```
