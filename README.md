@@ -16,5 +16,10 @@ or
 pip3 install lescolors
 ```
 
+## Requirements
+. colorsys
+. colorthief (https://github.com/fengsp/color-thief-py)
+. requests
+
 
 Have suggestions or issues? Let me know!
