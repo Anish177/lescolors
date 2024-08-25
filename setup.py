@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='lescolors',
-    version='0.1.0',
+    version='0.1.2',
     description='Color Manipulation and Analysis Utilities',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -13,7 +13,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests',
-        'colorsys',
         'colorthief',
     ],
     classifiers=[
