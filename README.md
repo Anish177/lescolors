@@ -15,3 +15,6 @@ or
 ```bash
 pip3 install lescolors
 ```
+
+
+Have suggestions or issues? Let me know!
