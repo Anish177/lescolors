@@ -1,6 +1,6 @@
 # lesColors
 
-lesColors is a lightweight Python package that provides utilities for manipulating and analyzing colors. It includes functions for calculating adjacent, analogous, and complementary colors, converting RGB values to hexadecimal format, and extracting the dominant color from an image via a URL.
+lesColors is a lightweight Python package that provides utilities for manipulating and analyzing colors. It includes functions for calculating adjacent, analogous, and complementary colors, converting RGB values to hexadecimal format, and extracting the dominant colors from an image via a URL.
 
 ## Installation
 
@@ -31,6 +31,9 @@ pip3 install lescolors
 
   - dominant_color_finder:
       Extracts and returns the most dominant RGB color from an image located at a given URL.
+    
+  - get_color_palette:
+      Extracts and returns the most dominant RGB colors from an image located at a given URL.
         
 ## Usage:
   This module can be used to explore color relationships, generate color schemes, and analyze colors from images. It is particularly useful for tasks related to dynamic theming, and visual content creation.
@@ -60,6 +63,11 @@ pip3 install lescolors
   - Finding the dominant color in an image:
       ```py3
       print(dominant_color_finder(image_url='https://i.stack.imgur.com/JM4F2.png', quality=1))
+      ```
+
+  - Finding the most dominant colors in an image:
+      ```py3
+      print(get_color_palette(image_url='https://i.stack.imgur.com/JM4F2.png', num_colors = 5, quality=1))
       ```
 
 Have suggestions or issues? Let me know!
