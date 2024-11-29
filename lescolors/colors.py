@@ -21,7 +21,7 @@ Functions:
 
     - dominant_color_finder(image_url: str, quality: int = 1) -> list[int]:
         Extracts and returns the most dominant RGB color from an image located at a given URL.
-        
+
 Usage:
     This module can be used to explore color relationships, generate color schemes,
     and analyze colors from images. It is particularly useful for tasks related
@@ -58,23 +58,23 @@ DEG30 = 30/360.
 def adjacent_colors(rgb: list[int], d: float = DEG30) -> list[map]:
     '''
     Takes in an RGB color value and returns a list of mapped adjacent colors.
-    
-    This function calculates the two adjacent colors in the color wheel, 
-    separated by a given degree value `d`. The color is first converted 
-    from RGB to HLS (Hue, Lightness, Saturation). The hue is then adjusted 
-    by `d` degrees in both the positive and negative directions to find 
-    the adjacent colors. These colors are converted back to RGB format 
+
+    This function calculates the two adjacent colors in the color wheel,
+    separated by a given degree value `d`. The color is first converted
+    from RGB to HLS (Hue, Lightness, Saturation). The hue is then adjusted
+    by `d` degrees in both the positive and negative directions to find
+    the adjacent colors. These colors are converted back to RGB format
     and returned as a list.
 
     Args:
         rgb (list[int]): A list containing the RGB components of the color.
-        d (float): The degree difference used to calculate adjacent colors 
+        d (float): The degree difference used to calculate adjacent colors
                    (default is 30 degrees, i.e., 1/12th of a full circle).
 
     Returns:
         list[map]: A list of two RGB values representing the adjacent colors.
     '''
-    r, g, b = map(lambda x: x/255., rgb)
+    r, g, b = map(lambda x: x / 255., rgb)
     h, l, s = colorsys.rgb_to_hls(r, g, b)
     h = [(h + d) % 1 for d in (-d, d)]
     adjacent = [map(lambda x: int(round(x * 255)), colorsys.hls_to_rgb(hi, l, s))
@@ -84,9 +84,9 @@ def adjacent_colors(rgb: list[int], d: float = DEG30) -> list[map]:
 def analogous_colors(rgb: list[int]) -> list[int]:
     '''
     Takes in an RGB color value and returns a list of analogous colors.
-    
-    Analogous colors are those that are adjacent to each other on the 
-    color wheel. This function uses the `adjacent_colors` function to 
+
+    Analogous colors are those that are adjacent to each other on the
+    color wheel. This function uses the `adjacent_colors` function to
     determine these colors and formats them as lists of integers.
 
     Args:
@@ -103,9 +103,9 @@ def analogous_colors(rgb: list[int]) -> list[int]:
 
 def complementary(rgb: list[int]) -> list[int]:
     '''Returns the RGB components of the complementary color.
-    
-    The complementary color is found by adding 180 degrees (0.5 in hue space) 
-    to the hue of the original color in HSV space. The result is converted 
+
+    The complementary color is found by adding 180 degrees (0.5 in hue space)
+    to the hue of the original color in HSV space. The result is converted
     back to RGB.
 
     Args:
@@ -120,7 +120,7 @@ def complementary(rgb: list[int]) -> list[int]:
 def rgb_to_hex(rgb: list[int]) -> str:
     '''
     Converts an RGB value to its hexadecimal (Hex) format.
-    
+
     The RGB components are converted to a hex string prefixed with "#".
 
     Args:
@@ -134,15 +134,15 @@ def rgb_to_hex(rgb: list[int]) -> str:
 def dominant_color_finder(image_url: str, quality: int = 1) -> list[int]:
     '''
     Returns the most common RGB values from the image provided by a URL.
-    
-    This function downloads an image from the specified URL, processes 
-    it to determine the most dominant color using the ColorThief library, 
+
+    This function downloads an image from the specified URL, processes
+    it to determine the most dominant color using the ColorThief library,
     and returns the RGB values of that color.
 
     Args:
         image_url (str): The URL of the image to process.
-        quality (int): An optional parameter to set the quality of the color extraction. 
-                       Higher quality values are slower but more accurate.
+        quality (int): An optional parameter to set the quality of the color extraction.
+                       Lower quality values are slower but more accurate.
 
     Returns:
         list[int]: A list containing the RGB values of the dominant color in the image.
@@ -152,6 +152,30 @@ def dominant_color_finder(image_url: str, quality: int = 1) -> list[int]:
     color = image.get_color(quality = quality)
 
     return color
+
+def get_color_palette(image_url: str, num_colors: int = 5, quality: int = 1) -> list[tuple[int]]:
+    '''
+    Returns the most dominant colors with their RGB values from the image provided by a URL.
+
+    This function downloads an image from the specified URL, processes
+    it to determine the most dominant colors using the ColorThief library,
+    and returns the colors with their respective RGB values, they are ordered
+    decreasingly by their order of dominance.
+
+    Args:
+        image_url (str): The URL of the image to process.
+        num_colors (int): An optional parameter to indicate how many dominant colors to fetch.
+        quality (int): An optional parameter to set the quality of the color extraction.
+                       Lower quality values are slower but more accurate.
+
+    Returns:
+        list[int]: A list containing the RGB values of the dominant color in the image.
+    '''
+    response = requests.get(image_url, timeout=2)
+    image = ColorThief(BytesIO(response.content))
+    colors = image.get_palette(num_colors, quality = quality)
+
+    return colors
 
 # Example usage:
 # print(rgb_to_hex(
