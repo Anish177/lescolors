@@ -1,26 +1,23 @@
 """
 Color Manipulation and Analysis Utilities (lescolors / Les colors / The colors)
 
-This module provides a set of functions for working with colors in various formats.
+This module provides a `Color` class for working with colors in various formats.
 It includes utilities for calculating adjacent and analogous colors, finding complementary
-colors, converting RGB values to hexadecimal format, and extracting the dominant color
-from an image via a URL.
+colors, converting RGB values to hexadecimal format, and extracting dominant colors
+from images via a URL.
+
+Classes:
+    - Color:
+        A class representing an RGB color, with methods to manipulate
+        and analyze color properties such as adjacent colors, complementary color,
+        and format conversions.
 
 Functions:
-    - adjacent_colors(rgb: list[int], d: float = DEG30) -> list[map]:
-        Calculates and returns the adjacent colors on the color wheel for a given RGB value.
+    - Color.from_image(image_url: str, quality: int = 1) -> Color:
+        Creates a Color object based on the dominant color in an image from a given URL.
 
-    - analogous_colors(rgb: list[int]) -> list[int]:
-        Computes and returns the analogous colors for a given RGB value.
-
-    - complementary(rgb: list[int]) -> list[int]:
-        Computes and returns the complementary color for a given RGB value.
-
-    - rgb_to_hex(rgb: list[int]) -> str:
-        Converts an RGB color value to its hexadecimal (Hex) string format.
-
-    - dominant_color_finder(image_url: str, quality: int = 1) -> list[int]:
-        Extracts and returns the most dominant RGB color from an image located at a given URL.
+    - Color.palette_from_image(image_url: str, num_colors: int = 5, quality: int = 1) -> list[Color]:
+        Extracts a palette of dominant colors from an image URL and returns a list of Color objects.
 
 Usage:
     This module can be used to explore color relationships, generate color schemes,
@@ -31,156 +28,177 @@ Dependencies:
     - colorsys: A standard Python module for converting between color systems.
     - requests: A Python library for making HTTP requests.
     - colorthief: A library for grabbing the dominant color or a
-                representative color palette from an image.
+                  representative color palette from an image.
 
 Examples:
-    - Finding analogous colors for a given RGB value:
-        print(analogous_colors([255, 0, 0]))
+    - Creating a color object and finding analogous colors:
+        red = Color([255, 0, 0])
+        print(red.to_analogous())
 
-    - Getting the complementary color of a given RGB value:
-        print(complementary([255, 0, 0]))
+    - Getting the complementary color of a given color:
+        print(red.to_complementary())
 
-    - Converting an RGB value to Hex format:
-        print(rgb_to_hex([255, 0, 0]))
+    - Converting a color to Hex format:
+        print(red.to_hex())
 
-    - Finding the dominant color in an image:
-        print(dominant_color_finder(image_url='https://i.stack.imgur.com/JM4F2.png', quality=1))
+    - Creating a color object from an image's dominant color:
+        dominant = Color.from_image('https://i.stack.imgur.com/JM4F2.png')
+        print(dominant)
+
+    - Getting a palette of dominant colors from an image:
+        palette = Color.palette_from_image('https://i.stack.imgur.com/JM4F2.png')
+        print(palette)
 """
 
 import colorsys
 from io import BytesIO
-from colorthief import ColorThief
 import requests
-
+from colorthief import ColorThief
 
 DEG30 = 30/360.
 
-def adjacent_colors(rgb: list[int], d: float = DEG30) -> list[map]:
+class Color:
     '''
-    Takes in an RGB color value and returns a list of mapped adjacent colors.
-
-    This function calculates the two adjacent colors in the color wheel,
-    separated by a given degree value `d`. The color is first converted
-    from RGB to HLS (Hue, Lightness, Saturation). The hue is then adjusted
-    by `d` degrees in both the positive and negative directions to find
-    the adjacent colors. These colors are converted back to RGB format
-    and returned as a list.
-
-    Args:
+    Represents a color in RGB space, with utilities for analysis and format conversion.
+    
+    Attributes:
         rgb (list[int]): A list containing the RGB components of the color.
-        d (float): The degree difference used to calculate adjacent colors
-                   (default is 30 degrees, i.e., 1/12th of a full circle).
-
-    Returns:
-        list[map]: A list of two RGB values representing the adjacent colors.
+        hls (tuple[float]): A tuple representing the HLS (Hue, Lightness, Saturation) values.
     '''
-    r, g, b = map(lambda x: x / 255., rgb)
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
-    h = [(h + d) % 1 for d in (-d, d)]
-    adjacent = [map(lambda x: int(round(x * 255)), colorsys.hls_to_rgb(hi, l, s))
-                for hi in h]
-    return adjacent
 
-def analogous_colors(rgb: list[int]) -> list[int]:
-    '''
-    Takes in an RGB color value and returns a list of analogous colors.
+    def __init__(self, rgb: list[int]):
+        '''
+        Initializes a Color object with the given RGB values.
 
-    Analogous colors are those that are adjacent to each other on the
-    color wheel. This function uses the `adjacent_colors` function to
-    determine these colors and formats them as lists of integers.
+        Args:
+            rgb (list[int]): A list containing the RGB components.
+        '''
+        self.rgb = rgb
+        self._update_hls()
 
-    Args:
-        rgb (list[int]): A list containing the RGB components of the color.
+    def _update_hls(self):
+        r, g, b = map(lambda x: x / 255., self.rgb)
+        self.hls = colorsys.rgb_to_hls(r, g, b)
 
-    Returns:
-        list[list[int]]: A list of two lists, each containing the RGB values of an analogous color.
-    '''
-    colors = adjacent_colors(rgb)
-    colors[0] = [i for i in colors[0]]
-    colors[1] = [i for i in colors[1]]
+    def to_hex(self) -> str:
+        '''
+        Converts the RGB value of the color to hexadecimal format.
 
-    return colors
+        Returns:
+            str: The hex representation of the color, prefixed with "#".
+        '''
+        return f'#{self.rgb[0]:02x}{self.rgb[1]:02x}{self.rgb[2]:02x}'
 
-def complementary(rgb: list[int]) -> list[int]:
-    '''Returns the RGB components of the complementary color.
+    def to_complementary(self) -> "Color":
+        '''
+        Computes and returns the complementary color.
 
-    The complementary color is found by adding 180 degrees (0.5 in hue space)
-    to the hue of the original color in HSV space. The result is converted
-    back to RGB.
+        The complementary color is found by adding 180 degrees (0.5 in hue space)
+        to the hue of the original color in HSV space, and converting back to RGB.
 
-    Args:
-        rgb (list[int]): A list containing the RGB components of the color.
+        Returns:
+            Color: A new Color object representing the complementary color.
+        '''
+        hsv = colorsys.rgb_to_hsv(*map(lambda x: x / 255., self.rgb))
+        comp_rgb = colorsys.hsv_to_rgb((hsv[0] + 0.5) % 1, hsv[1], hsv[2])
+        comp_rgb = list(map(lambda x: int(round(x * 255)), comp_rgb))
+        return Color(comp_rgb)
 
-    Returns:
-        list[int]: A list containing the RGB values of the complementary color.
-    '''
-    hsv = colorsys.rgb_to_hsv(rgb[0], rgb[1], rgb[2])
-    return [int(color) for color in colorsys.hsv_to_rgb((hsv[0] + 0.5) % 1, hsv[1], hsv[2])]
+    def to_adjacent(self, d: float = DEG30) -> list["Color"]:
+        '''
+        Calculates and returns the adjacent colors on the color wheel.
 
-def rgb_to_hex(rgb: list[int]) -> str:
-    '''
-    Converts an RGB value to its hexadecimal (Hex) format.
+        This function adjusts the hue by a given degree difference `d`
+        in both the positive and negative directions.
 
-    The RGB components are converted to a hex string prefixed with "#".
+        Args:
+            d (float): The degree difference used to calculate adjacent colors
+                       (default is 30 degrees, i.e., 1/12th of a full circle).
 
-    Args:
-        rgb (list[int]): A list containing the RGB components of the color.
+        Returns:
+            list[Color]: A list of two Color objects representing the adjacent colors.
+        '''
+        h, l, s = self.hls
+        hues = [(h + d) % 1, (h - d) % 1]
+        adjacent = [
+            Color(list(map(lambda x: int(round(x * 255)), colorsys.hls_to_rgb(hi, l, s))))
+            for hi in hues
+        ]
+        return adjacent
 
-    Returns:
-        str: The hex representation of the color, prefixed with "#".
-    '''
-    return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
+    def to_analogous(self) -> list["Color"]:
+        '''
+        Computes and returns the analogous colors.
 
-def dominant_color_finder(image_url: str, quality: int = 1) -> list[int]:
-    '''
-    Returns the most common RGB values from the image provided by a URL.
+        Analogous colors are those adjacent on the color wheel.
+        This uses the `to_adjacent` method with the default degree.
 
-    This function downloads an image from the specified URL, processes
-    it to determine the most dominant color using the ColorThief library,
-    and returns the RGB values of that color.
+        Returns:
+            list[Color]: A list of two Color objects representing the analogous colors.
+        '''
+        return self.to_adjacent()
 
-    Args:
-        image_url (str): The URL of the image to process.
-        quality (int): An optional parameter to set the quality of the color extraction.
-                       Lower quality values are slower but more accurate.
+    @staticmethod
+    def from_hex(hex_color: str) -> "Color":
+        '''
+        Creates a Color object from a hexadecimal color string.
 
-    Returns:
-        list[int]: A list containing the RGB values of the dominant color in the image.
-    '''
-    response = requests.get(image_url, timeout=2)
-    image = ColorThief(BytesIO(response.content))
-    color = image.get_color(quality = quality)
+        Args:
+            hex_color (str): A hexadecimal color string (e.g., "#ff0000").
 
-    return color
+        Returns:
+            Color: A new Color object corresponding to the hex value.
+        '''
+        hex_color = hex_color.lstrip("#")
+        rgb = [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+        return Color(rgb)
 
-def get_color_palette(image_url: str, num_colors: int = 5, quality: int = 1) -> list[tuple[int]]:
-    '''
-    Returns the most dominant colors with their RGB values from the image provided by a URL.
+    @staticmethod
+    def from_image(image_url: str, quality: int = 1) -> "Color":
+        '''
+        Extracts the dominant color from an image URL and creates a Color object.
 
-    This function downloads an image from the specified URL, processes
-    it to determine the most dominant colors using the ColorThief library,
-    and returns the colors with their respective RGB values, they are ordered
-    decreasingly by their order of dominance.
+        Args:
+            image_url (str): The URL of the image to process.
+            quality (int): An optional parameter to set the quality of extraction.
+                           Lower quality values are slower but more accurate.
 
-    Args:
-        image_url (str): The URL of the image to process.
-        num_colors (int): An optional parameter to indicate how many dominant colors to fetch.
-        quality (int): An optional parameter to set the quality of the color extraction.
-                       Lower quality values are slower but more accurate.
+        Returns:
+            Color: A Color object representing the dominant color of the image.
+        '''
+        response = requests.get(image_url, timeout=2)
+        image = ColorThief(BytesIO(response.content))
+        dominant_rgb = image.get_color(quality=quality)
+        return Color(list(dominant_rgb))
 
-    Returns:
-        list[int]: A list containing the RGB values of the dominant color in the image.
-    '''
-    response = requests.get(image_url, timeout=2)
-    image = ColorThief(BytesIO(response.content))
-    colors = image.get_palette(num_colors, quality = quality)
+    @staticmethod
+    def palette_from_image(image_url: str, num_colors: int = 5, quality: int = 1) -> list["Color"]:
+        '''
+        Extracts a palette of dominant colors from an image URL.
 
-    return colors
+        Args:
+            image_url (str): The URL of the image to process.
+            num_colors (int): Number of dominant colors to fetch (default is 5).
+            quality (int): An optional parameter to set the quality of extraction.
+                           Lower quality values are slower but more accurate.
+
+        Returns:
+            list[Color]: A list of Color objects representing the dominant colors.
+        '''
+        response = requests.get(image_url, timeout=2)
+        image = ColorThief(BytesIO(response.content))
+        palette = image.get_palette(color_count=num_colors, quality=quality)
+        return [Color(list(color)) for color in palette]
+
+    def __repr__(self):
+        return f"Color(rgb={self.rgb}, hex='{self.to_hex()}')"
 
 # Example usage:
-# print(rgb_to_hex(
-    # dominant_color_finder(
-        # image_url = 'https://i.stack.imgur.com/JM4F2.png',
-        # quality = 1)
-    # )
-# )
+# red = Color([255, 0, 0])
+# print(red.to_hex())
+# print(red.to_complementary())
+# print(red.to_analogous())
+# dominant = Color.from_image('https://i.stack.imgur.com/JM4F2.png')
+# print(dominant)
+# palette = Color.palette_from_image('https://i.stack.imgur.com/JM4F2.png')
+# print(palette)
